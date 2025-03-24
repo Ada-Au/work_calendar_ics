@@ -215,7 +215,7 @@
         if (selectedBlocks.length > 0) {
           var content =
             "BEGIN:VCALENDAR\n" +
-            "TZID:Europe/London\n" + //utc 0
+            "TZID:Asia/Hong_Kong\n" +
             "CALSCALE:GREGORIAN\n" +
             "METHOD:PUBLISH\n" +
             "PRODID:-//Work Cal//EN\n" +
@@ -223,15 +223,15 @@
 
           selectedBlocks.forEach((block) => {
             if (block.title.match("[0-9][A-Z][A-Z]$")) {
-              const timezoneOffset = new Date().getTimezoneOffset() / 60;
+              // const timezoneOffset = new Date().getTimezoneOffset() / 60;
               const startTime = new Date(
                 new Date(year, currentMonth, block.date.slice(-2)).getTime() +
                   ((block.title[0] - 1) * 24 +
                     block.title[1].charCodeAt(0) -
                     65) *
                     15 *
-                    60000 +
-                  timezoneOffset * 60 * 60000
+                    60000
+                // timezoneOffset * 60 * 60000
               );
               const hour = (block.title[2].charCodeAt(0) - 64) / 2;
 
@@ -258,7 +258,7 @@
                           65) *
                           15 *
                           60000 +
-                        (hour + timezoneOffset) * 60 * 60000
+                        hour * 60 * 60000
                     )
                       .toISOString()
                       .replace(/-|:|\..+/g, "")) +
