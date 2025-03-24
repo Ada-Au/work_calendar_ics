@@ -223,7 +223,7 @@
           selectedBlocks.forEach((block) => {
             if (block.title.match("[0-9][A-Z][A-Z]$")) {
               const startTime = new Date(
-                new Date(year, currentMonth, 1).getTime() +
+                new Date(year, currentMonth, block.date.slice(-2)).getTime() +
                   ((block.title[0] - 1) * 24 +
                     block.title[1].charCodeAt(0) -
                     65) *
@@ -245,7 +245,11 @@
                     "\n" +
                     "DTEND:" +
                     new Date(
-                      new Date(year, currentMonth, 1).getTime() +
+                      new Date(
+                        year,
+                        currentMonth,
+                        block.date.slice(-2)
+                      ).getTime() +
                         ((block.title[0] - 1) * 24 +
                           block.title[1].charCodeAt(0) -
                           65) *
@@ -272,6 +276,8 @@
             }
           });
 
+          console.log(content);
+          return;
           content += "END:VCALENDAR";
 
           var data = new File([content], "work.ics", { type: "text/calendar" });
