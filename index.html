@@ -183,7 +183,7 @@
 
           content += "END:VCALENDAR";
 
-          var data = new File([content], { type: "text/calendar" });
+          var data = new File([content], "work.ics", { type: "text/calendar" });
           icsFile = window.URL.createObjectURL(data);
 
           window.open(icsFile);
