@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        width: min-content;
+        margin-bottom: 16px;
+      }
+      .day {
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        width: min-content;
+      }
+      .block {
+        margin: 5px 0;
+        padding: 10px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+      }
+      .block.selected {
+        background-color: #4caf50;
+        color: white;
+      }
+      .controls {
+        display: flex;
+        margin-bottom: 16px;
+      }
+      #monthSelect {
+        display: flex;
+        gap: 10px;
+      }
+      #yearSelect {
+        margin: auto 0 auto 16px;
+        width: min-content;
+      }
+      .display {
+        display: flex;
+        justify-content: center;
+      }
+      button {
+        padding: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <div id="monthSelect">
+        <button onclick="changeMonth(-1)"><</button>
+        <h2 class="display" style="width: 140px"></h2>
+        <button onclick="changeMonth(1)">></button>
+      </div>
+
+      <select id="yearSelect" onchange="updateCalendar()">
+        <!-- Generate years dynamically -->
+      </select>
+    </div>
+    <div class="calendar" id="calendar"></div>
+    <button onclick="showSelections()">Download</button>
+    <script>
+      const selectedBlocks = [];
+
+      function populateYearSelect() {
+        const yearSelect = document.getElementById("yearSelect");
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+          const option = document.createElement("option");
+          option.value = year;
+          option.textContent = year;
+          if (year === currentYear) {
+            option.selected = true;
+          }
+          yearSelect.appendChild(option);
+        }
+      }
+
+      function getDaysInMonth(year, month) {
+        return new Date(year, month + 1, 0).getDate();
+      }
+
+      const months = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      let currentMonth = new Date().getMonth();
+
+      function genMonthSelect() {
+        const monthSelect = document.getElementById("monthSelect");
+
+        monthSelect.children[1].innerHTML = months[currentMonth];
+      }
+
+      function changeMonth(change) {
+        const isEmpty = checkInput(true);
+        if (isEmpty || confirm("確定? 更改月份會清除現有資料!")) {
+          const monthSelect = document.getElementById("monthSelect");
+          currentMonth += change;
+
+          if (currentMonth < 0) {
+            monthSelect.children[1].innerHTML = "December";
+            currentMonth = 11;
+          } else if (currentMonth > 11) {
+            monthSelect.children[1].innerHTML = "January";
+            currentMonth = 0;
+          } else {
+            monthSelect.children[1].innerHTML = months[currentMonth];
+          }
+          updateCalendar();
+        }
+      }
+
+      function createCalendar() {
+        const calendar = document.getElementById("calendar");
+        calendar.innerHTML = ""; // Clear previous calendar
+        const year = parseInt(document.getElementById("yearSelect").value);
+        const daysInMonth = getDaysInMonth(year, currentMonth);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dayDiv = document.createElement("div");
+          dayDiv.className = "day";
+          dayDiv.innerHTML = `<strong>${day}</strong>`;
+
+          const inputTime = document.createElement("input");
+          inputTime.style = "width: 33px; text-align: center;";
+
+          dayDiv.appendChild(inputTime);
+          calendar.appendChild(dayDiv);
+        }
+      }
+
+      function showSelections() {
+        const calendar = document.getElementById("calendar");
+
+        checkInput();
+
+        if (selectedBlocks.length > 0) {
+          var content =
+            "BEGIN:VCALENDAR\n" +
+            "CALSCALE:GREGORIAN\n" +
+            "METHOD:PUBLISH\n" +
+            "PRODID:-//Work Cal//EN\n" +
+            "VERSION:2.0\n";
+
+          selectedBlocks.forEach((block) => {
+            content +=
+              "BEGIN:VEVENT\n" +
+              "UID:" +
+              block.date +
+              block.title +
+              "\n" +
+              "DTSTART;VALUE=DATE:" +
+              block.date +
+              "\n" +
+              "SUMMARY:" +
+              block.title +
+              "\n" +
+              "END:VEVENT\n";
+          });
+
+          content += "END:VCALENDAR";
+
+          var data = new File([content], { type: "text/plain" });
+          icsFile = window.URL.createObjectURL(data);
+
+          var a = document.createElement("a");
+
+          a.href = icsFile;
+          a.download = "calendar.ics";
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function () {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(icsFile);
+          }, 0);
+        }
+      }
+
+      function updateCalendar() {
+        createCalendar();
+      }
+
+      function checkInput(isCheck) {
+        const calendar = document.getElementById("calendar");
+        const inputs = calendar.querySelectorAll("input");
+        selectedBlocks.length = 0;
+
+        currentMonth;
+        const year = document.getElementById("yearSelect").value;
+
+        inputs.forEach((input) => {
+          if (input.value.length > 0) {
+            const day = input
+              .closest(".day")
+              .querySelector("strong").textContent;
+
+            selectedBlocks.push({
+              date:
+                year +
+                (currentMonth < 10 ? "0" : "") +
+                currentMonth.toString() +
+                (parseInt(day) < 10 ? "0" : "") +
+                day,
+              title: input.value,
+            });
+            if (isCheck) return false;
+          }
+        });
+
+        return isCheck && selectedBlocks.length > 0 ? false : true;
+      }
+
+      populateYearSelect();
+      genMonthSelect();
+      createCalendar();
+    </script>
+  </body>
+</html>
