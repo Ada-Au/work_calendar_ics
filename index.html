@@ -188,14 +188,7 @@
 
           window.open(icsFile);
 
-          // var a = document.createElement("a");
-
-          // a.href = icsFile;
-          // a.download = "calendar.ics";
-          // document.body.appendChild(a);
-          // a.click();
           setTimeout(function () {
-            // document.body.removeChild(a);
             window.URL.revokeObjectURL(icsFile);
           }, 0);
         }
@@ -222,8 +215,8 @@
             selectedBlocks.push({
               date:
                 year +
-                (currentMonth < 10 ? "0" : "") +
-                currentMonth.toString() +
+                (currentMonth + 1 < 10 ? "0" : "") +
+                (currentMonth + 1).toString() +
                 (parseInt(day) < 10 ? "0" : "") +
                 day,
               title: input.value,
