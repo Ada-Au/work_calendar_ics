@@ -4,12 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Calendar</title>
+    <!-- <script src="https://cdn.rawgit.com/naptha/tesseract.js/1.0.10/dist/tesseract.js"></script> -->
     <style>
       body {
         font-family: Arial, sans-serif;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        width: min-content;
       }
       .calendar {
         display: grid;
@@ -45,7 +47,7 @@
         gap: 10px;
       }
       #yearSelect {
-        margin: auto 0 auto 16px;
+        margin: auto 0 auto auto;
         width: min-content;
       }
       .display {
@@ -65,13 +67,59 @@
         <button onclick="changeMonth(1)">></button>
       </div>
 
-      <select id="yearSelect" onchange="updateCalendar()">
-        <!-- Generate years dynamically -->
-      </select>
+      <select id="yearSelect" onchange="updateCalendar()"></select>
     </div>
     <div class="calendar" id="calendar"></div>
-    <button onclick="showSelections()">Download</button>
+    <div class="display">
+      <button onclick="showSelections(false)">Export</button>
+      <div style="width: 24px"></div>
+      <button onclick="showSelections(true)">Export (Full day)</button>
+    </div>
+    <!-- <div>
+      <input
+        type="file"
+        id="imageUploader"
+        accept="image/*"
+        onchange="handleImageUpload()"
+      />
+      <canvas id="imageCanvas" style="display: none"></canvas>
+    </div> -->
     <script>
+      // function handleImageUpload() {
+      //   const fileInput = document.getElementById("imageUploader");
+      //   const canvas = document.getElementById("imageCanvas");
+      //   const ctx = canvas.getContext("2d");
+
+      //   if (fileInput.files && fileInput.files[0]) {
+      //     const reader = new FileReader();
+      //     reader.onload = function (e) {
+      //       const img = new Image();
+      //       img.onload = function () {
+      //         canvas.width = img.width;
+      //         canvas.height = img.height;
+      //         ctx.drawImage(img, 0, 0);
+      //         // processImage(canvas);
+      //         processImage(img);
+      //       };
+      //       img.src = e.target.result;
+      //     };
+      //     reader.readAsDataURL(fileInput.files[0]);
+      //   }
+      // }
+
+      // function processImage(canvas) {
+      //   // const ctx = canvas.getContext("2d");
+      //   // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      //   (async () => {
+      //     const worker = Tesseract.create("eng");
+      //     // const ret = await worker.recognize(canvas);
+      //     const ret = await worker.recognize(canvas);
+      //     console.log(ret.text);
+      //     await worker.terminate();
+      //   })();
+      // }
+
       const selectedBlocks = [];
 
       function populateYearSelect() {
@@ -86,10 +134,6 @@
           }
           yearSelect.appendChild(option);
         }
-      }
-
-      function getDaysInMonth(year, month) {
-        return new Date(year, month + 1, 0).getDate();
       }
 
       const months = [
@@ -137,22 +181,33 @@
         const calendar = document.getElementById("calendar");
         calendar.innerHTML = ""; // Clear previous calendar
         const year = parseInt(document.getElementById("yearSelect").value);
-        const daysInMonth = getDaysInMonth(year, currentMonth);
+        const daysInMonth = new Date(year, currentMonth + 1, 0).getDate();
+
+        for (let i = 0; i < new Date(year, currentMonth, 1).getDay(); i++) {
+          const emptyDiv = document.createElement("div");
+          calendar.appendChild(emptyDiv);
+        }
 
         for (let day = 1; day <= daysInMonth; day++) {
           const dayDiv = document.createElement("div");
           dayDiv.className = "day";
           dayDiv.innerHTML = `<strong>${day}</strong>`;
 
-          const inputTime = document.createElement("input");
-          inputTime.style = "width: 33px; text-align: center;";
+          const input = document.createElement("input");
+          input.style = "width: 33px; text-align: center;";
 
-          dayDiv.appendChild(inputTime);
+          input.setAttribute("autocomplete", "off");
+          input.setAttribute("autocorrect", "off");
+          input.setAttribute("autocapitalize", "off");
+          input.setAttribute("spellcheck", false);
+
+          dayDiv.appendChild(input);
           calendar.appendChild(dayDiv);
         }
       }
 
-      function showSelections() {
+      function showSelections(isFullDay) {
+        const year = parseInt(document.getElementById("yearSelect").value);
         const calendar = document.getElementById("calendar");
 
         checkInput();
@@ -166,19 +221,55 @@
             "VERSION:2.0\n";
 
           selectedBlocks.forEach((block) => {
-            content +=
-              "BEGIN:VEVENT\n" +
-              "UID:" +
-              block.date +
-              block.title +
-              "\n" +
-              "DTSTART;VALUE=DATE:" +
-              block.date +
-              "\n" +
-              "SUMMARY:" +
-              block.title +
-              "\n" +
-              "END:VEVENT\n";
+            if (block.title.match("[0-9][A-Z][A-Z]$")) {
+              const startTime = new Date(
+                new Date(year, currentMonth, 1).getTime() +
+                  ((block.title[0] - 1) * 24 +
+                    block.title[1].charCodeAt(0) -
+                    65) *
+                    15 *
+                    60000
+              );
+              const hour = (block.title[2].charCodeAt(0) - 64) / 2;
+
+              content +=
+                "BEGIN:VEVENT\n" +
+                "UID:" +
+                block.date +
+                block.title +
+                "\n" +
+                (isFullDay
+                  ? "DTSTART;VALUE=DATE:" + block.date
+                  : "DTSTART:" +
+                    startTime.toISOString().replace(/-|:|\..+/g, "") +
+                    "\n" +
+                    "DTEND:" +
+                    new Date(
+                      new Date(year, currentMonth, 1).getTime() +
+                        ((block.title[0] - 1) * 24 +
+                          block.title[1].charCodeAt(0) -
+                          65) *
+                          15 *
+                          60000 +
+                        hour * 60 * 60000
+                    )
+                      .toISOString()
+                      .replace(/-|:|\..+/g, "")) +
+                "\n" +
+                "SUMMARY:" +
+                block.title +
+                " " +
+                startTime.getHours() +
+                ":" +
+                (startTime.getMinutes() < 10 ? "0" : "") +
+                startTime.getMinutes() +
+                "\n" +
+                "DESCRIPTION:" +
+                hour +
+                " hours" +
+                "\n" +
+                "END:VEVENT\n";
+            }
           });
 
           content += "END:VCALENDAR";
@@ -203,6 +294,20 @@
         const inputs = calendar.querySelectorAll("input");
         selectedBlocks.length = 0;
 
+        // test
+        selectedBlocks.push({
+          date: "20210101",
+          title: "2FF",
+        });
+        selectedBlocks.push({
+          date: "20210101",
+          title: "3AO",
+        });
+        selectedBlocks.push({
+          date: "20210101",
+          title: "4JX",
+        });
+
         currentMonth;
         const year = document.getElementById("yearSelect").value;
 
@@ -219,7 +324,7 @@
                 (currentMonth + 1).toString() +
                 (parseInt(day) < 10 ? "0" : "") +
                 day,
-              title: input.value,
+              title: input.value.toUpperCase(),
             });
             if (isCheck) return false;
           }
