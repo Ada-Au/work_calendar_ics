@@ -215,7 +215,7 @@
         if (selectedBlocks.length > 0) {
           var content =
             "BEGIN:VCALENDAR\n" +
-            "TZID:Asia/Hong_Kong\n" +
+            // "TZID:Asia/Hong_Kong\n" +
             "CALSCALE:GREGORIAN\n" +
             "METHOD:PUBLISH\n" +
             "PRODID:-//Work Cal//EN\n" +
@@ -266,9 +266,9 @@
                 "SUMMARY:" +
                 block.title +
                 " " +
-                (startTime.getHours() - getTimezoneOffset < 0
-                  ? startTime.getHours() + 24 - getTimezoneOffset
-                  : startTime.getHours() - getTimezoneOffset) +
+                (startTime.getHours() - timezoneOffset > 23
+                  ? startTime.getHours() - 24 + timezoneOffset
+                  : startTime.getHours() + timezoneOffset) +
                 ":" +
                 (startTime.getMinutes() < 10 ? "0" : "") +
                 startTime.getMinutes() +
