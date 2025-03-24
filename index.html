@@ -223,15 +223,15 @@
 
           selectedBlocks.forEach((block) => {
             if (block.title.match("[0-9][A-Z][A-Z]$")) {
-              // const timezoneOffset = new Date().getTimezoneOffset() / 60;
+              const timezoneOffset = new Date().getTimezoneOffset() / 60;
               const startTime = new Date(
                 new Date(year, currentMonth, block.date.slice(-2)).getTime() +
                   ((block.title[0] - 1) * 24 +
                     block.title[1].charCodeAt(0) -
                     65) *
                     15 *
-                    60000
-                // timezoneOffset * 60 * 60000
+                    60000 -
+                  timezoneOffset * 60 * 60000
               );
               const hour = (block.title[2].charCodeAt(0) - 64) / 2;
 
@@ -258,7 +258,7 @@
                           65) *
                           15 *
                           60000 +
-                        hour * 60 * 60000
+                        (hour - timezoneOffset) * 60 * 60000
                     )
                       .toISOString()
                       .replace(/-|:|\..+/g, "")) +
@@ -266,7 +266,9 @@
                 "SUMMARY:" +
                 block.title +
                 " " +
-                startTime.getHours() +
+                (startTime.getHours() - getTimezoneOffset < 0
+                  ? startTime.getHours() + 24 - getTimezoneOffset
+                  : startTime.getHours() - getTimezoneOffset) +
                 ":" +
                 (startTime.getMinutes() < 10 ? "0" : "") +
                 startTime.getMinutes() +
