@@ -183,17 +183,19 @@
 
           content += "END:VCALENDAR";
 
-          var data = new File([content], { type: "text/plain" });
+          var data = new File([content], { type: "text/calendar" });
           icsFile = window.URL.createObjectURL(data);
 
-          var a = document.createElement("a");
+          window.open(icsFile);
 
-          a.href = icsFile;
-          a.download = "calendar.ics";
-          document.body.appendChild(a);
-          a.click();
+          // var a = document.createElement("a");
+
+          // a.href = icsFile;
+          // a.download = "calendar.ics";
+          // document.body.appendChild(a);
+          // a.click();
           setTimeout(function () {
-            document.body.removeChild(a);
+            // document.body.removeChild(a);
             window.URL.revokeObjectURL(icsFile);
           }, 0);
         }
